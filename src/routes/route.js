@@ -1,14 +1,11 @@
-const express=require("express")
+const express = require("express");
 
-const router=express.Router()
+const router = express.Router();
 
-const controlller=require("../controller/urlController")
+const controlller = require("../controller/urlController");
 
-router.post('/shorten',controlller.createUrl)
+router.post("/url/shorten", controlller.createUrl);
 
-//router.get( "/:urlCode",controlller.)
+router.get("/:urlCode", controlller.getUrl);
 
-
-
-
-module.exports=router
+module.exports = router;
