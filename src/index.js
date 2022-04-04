@@ -25,3 +25,9 @@ mongoose
   .catch((err) => {
     console.log(err);
   });
+
+  app.listen(3000, () => {
+    console.log("app running on port 3000");
+  });
+
+  
