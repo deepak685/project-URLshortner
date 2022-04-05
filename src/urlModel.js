@@ -6,19 +6,18 @@ const urlSchema = new mongoose.Schema(
       type: String,
       required: true,
       unique: true,
-      lowercase: true,
-      trim: true,
+      trim: true
     },
     longUrl: { 
         type: String, 
-        required: true, 
+        required: true,
         trim: true 
     },
     shortUrl: {
       type: String,
       required: true,
       unique: true,
-      trim: true,
+      trim: true
     },
   },
   { timestamps: true }

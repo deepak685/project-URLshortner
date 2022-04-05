@@ -3,11 +3,11 @@ const shortId = require("shortid");
 const urlModel = require("./urlModel");
 const validator = require("./validator")
 
-//////////////////////////////////////////////////////////////////////////////////////////////
+//----------------------create short Url----------------------------------------------------------------------------------------------------------------
 
-const createUrl = async (req, res) => {
+const createShortUrl = async (req, res) => {
   try {
-    const baseUrl = "https://localhost:3000";
+    const baseUrl = "http://localhost:3000";
 
     if (!validUrl.isUri(baseUrl)) {
       return res.status(400).json("Invalid Base Url");
@@ -16,7 +16,7 @@ const createUrl = async (req, res) => {
     if (!(validator.isValidRequestBody(req.body))) {
       return res.status(400).send({
         status: false,
-        message: "Invalid request parameters. Please provide url details",
+        message: "Invalid request. Please provide url details",
       });
     }
 
@@ -30,33 +30,40 @@ const createUrl = async (req, res) => {
       let isUrlUsed = await urlModel.findOne({longUrl});
 
       if (isUrlUsed) {
-        res.status(400).json({ status: false, msg: "url already exits" });
+        return res.status(200).json({ status: true, msg: "Url Details.", data:isUrlUsed});
       }
     } else {
       res.status(400).json({ status: false, msg: "invalid longurl" });
     }
     // Create url code
-    const urlCode = shortId.generate();
+    const urlCode = shortId.generate().toLowerCase();
 
-    //create short url
-    const shortUrl = baseUrl + "/" + urlCode;
+    //checking duplicate UrlCode
+    const isDuplicateUrlCode = await urlModel.findOne({urlCode});
 
-    let urlCreated = {
-      longUrl,
-      shortUrl,
-      urlCode,
-    };
+    if(isDuplicateUrlCode){
+      return res.status(400).send({status:false, msg:"The urlCode is already present, create another UrlCode."})
+    }
+    else{
+      //create short url
+      const shortUrl = baseUrl + "/" + urlCode;
 
-    let savedData = await urlModel.create(urlCreated);
-    res.status(201).json({ status: true, msg:"URL created successfully", data: savedData });
+      let urlCreated = {
+        longUrl,
+        shortUrl,
+        urlCode
+      };
+
+      let savedData = await urlModel.create(urlCreated);
+      res.status(201).json({ status: true, msg:"Url Details.", data: savedData });
+    }
   } catch (error) {
     console.error(error);
     res.status(500).json({ status: false, msg: error.message });
   }
 };
 
-
-////////////////////////////////////////////////////////////////////////////////////////////
+//----------------------getURL----------------------------------------------------------------------------------------------------------------
 
 const getUrl = async (req, res) => {
   try {
@@ -64,7 +71,7 @@ const getUrl = async (req, res) => {
     if (url) {
       return res.status(301).redirect(url.longUrl);
     } else {
-      return res.status(404).json({ status: false, msg: "URL not found" });
+      return res.status(400).json({ status: false, msg: "Invalid URL" });
     }
   } catch (error) {
     res.status(500).json({ status: false, msg: error.message });
@@ -72,4 +79,4 @@ const getUrl = async (req, res) => {
 };
 
 module.exports.getUrl = getUrl;
-module.exports.createUrl = createUrl;
+module.exports.createShortUrl = createShortUrl;

@@ -5,7 +5,7 @@ const control=require("./controller")
 
 //------------------API's--------------------
 
-router.post('/url/shorten',control.createUrl)
-router.get( "/:urlCode",control.getUrl)
+router.post("/url/shorten",control.createShortUrl)
+router.get("/:urlCode",control.getUrl)
 
 module.exports = router;
