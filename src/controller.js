@@ -68,7 +68,7 @@ const createShortUrl = async (req, res) => {
       };
 
       let savedData = await urlModel.create(urlCreated);
-      // await SET_ASYNC(`${urlCode}`, JSON.stringify(longUrl))
+      await SET_ASYNC(`${urlCode}`, JSON.stringify(longUrl))
       return res
         .status(201)
         .json({ status: true, msg: "Url Details.", data: savedData });
