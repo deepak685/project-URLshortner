@@ -2,8 +2,11 @@ const validUrl = require("valid-url");
 const shortId = require("shortid");
 const urlModel = require("./urlModel");
 const validator = require("./validator");
-const redis = require("redis");
+const { redisClient } = require("./redisClient")
 const { promisify } = require("util");
+
+const SET_ASYNC = promisify(redisClient.SET).bind(redisClient);
+const GET_ASYNC = promisify(redisClient.GET).bind(redisClient);
 
 //----------------------create short Url----------------------------------------------------------------------------------------------------------------
 
@@ -65,6 +68,7 @@ const createShortUrl = async (req, res) => {
       };
 
       let savedData = await urlModel.create(urlCreated);
+      // await SET_ASYNC(`${urlCode}`, JSON.stringify(longUrl))
       return res
         .status(201)
         .json({ status: true, msg: "Url Details.", data: savedData });
@@ -77,41 +81,31 @@ const createShortUrl = async (req, res) => {
 
 //----------------------getURL----------------------------------------------------------------------------------------------------------------
 
-//Connect to redis
-const redisClient = redis.createClient(
-  11591,
-  "redis-11591.c264.ap-south-1-1.ec2.cloud.redislabs.com",
-  { no_ready_check: true }
-);
-redisClient.auth("zxcRHOlNM6EjJWf3ZmbflRZRmMicWCGu", function (err) {
-  if (err) throw err;
-});
-
-redisClient.on("connect", async function () {
-  console.log("Connected to Redis..");
-});
-
-const SET_ASYNC = promisify(redisClient.SET).bind(redisClient);
-const GET_ASYNC = promisify(redisClient.GET).bind(redisClient);
-
 const getUrl = async (req, res) => {
-  let cahcedUrl = await GET_ASYNC(`${req.params.urlCode}`);
-  if (cahcedUrl) {
-    res.status(301).redirect(cahcedUrl.longUrl);
-  } else {
-    let url = await urlModel.findOne({ urlCode: req.params.urlCode });
-    await SET_ASYNC(`${req.params.urlCode}`, JSON.stringify(url));
-    return res.status(301).redirect(cahcedUrl.longUrl);
+  try {
+    let cachedData = await GET_ASYNC(req.params.urlCode);
+    const parsingData = JSON.parse(cachedData)
+    if (cachedData) {
+      return res.status(307).redirect(parsingData);
+    }
+    else{
+        const urlDetails = await urlModel.findOne({urlCode: req.params.urlCode})
+        if(urlDetails){
+          return res.status(307).redirect(urlDetails.longUrl)
+        }
+        else{
+          return res.status(404).send({ status: false, msg: "No URL Found" });
+        }
+  }
+  } 
+  catch (error) {
+    res.status(500).json({ status: false, msg: error.message });
   }
 };
+
 
 module.exports.createShortUrl = createShortUrl;
 module.exports.getUrl = getUrl;
 
-//ankit
-//redis-13491.c212.ap-south-1-1.ec2.cloud.redislabs.com:13491
-//BuMCtOJ6K2GtgEGrtKNmPEPT8rmemIwS
-
-// mine
-// A36qdjwe6qe2culvtczsxc7aalgcmjux6gvhrrctexghdh13m2w\
-// redis-11591.c264.ap-south-1-1.ec2.cloud.redislabs.com:11591
+//we are using radis database because we want the response time time to decrease, if a big company dont use redis then we would need to go to the main database 
+//with millions of data, 
