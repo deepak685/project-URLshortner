@@ -14,7 +14,7 @@ const createShortUrl = async (req, res) => {
   try {
     const baseUrl = "http://localhost:3000";
 
-    if (!validUrl.isUri(baseUrl)) {
+    if (!validUrl.isWebUri(baseUrl)) {
       return res.status(400).json("Invalid Base Url");
     }
 
@@ -33,7 +33,7 @@ const createShortUrl = async (req, res) => {
         .json({ status: false, msg: "please provide longUrl." });
     }
 
-    if (validUrl.isUri(longUrl)) {
+    if (validUrl.isWebUri(longUrl)) {
       let isUrlUsed = await urlModel.findOne({ longUrl });
 
       if (isUrlUsed) {
